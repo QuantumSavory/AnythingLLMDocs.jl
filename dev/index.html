@@ -3,31 +3,11 @@
 // Bad workaround for Documenter + require.js clashing with AnythingLLM.
 // Render the widget inside a sandboxed iframe overlay to isolate globals.
 (function() {
-  const embedId = "af55e229-6091-4b93-a8b9-f55264801b6c";
+  const embedId = "99e8041e-f055-48c6-8d5d-b6369828f160";
   const apiBase = "https://anythingllm.krastanov.org/api/embed";
   const src = "https://anythingllm.krastanov.org/embed/anythingllm-chat-widget.min.js";
-  const resizerParentSrc = "https://unpkg.com/@iframe-resizer/parent@5.0.0/dist/iframeResizer.min.js";
-  const resizerChildSrc = "https://unpkg.com/@iframe-resizer/child@5.0.0/dist/iframeResizer.contentWindow.min.js";
 
-  const ensureResizer = () => new Promise((resolve) => {
-    if (window.iFrameResize) {
-      resolve(window.iFrameResize);
-      return;
-    }
-    const existing = document.querySelector('script[data-anythingllm-resizer-parent]');
-    if (existing) {
-      existing.addEventListener('load', () => resolve(window.iFrameResize));
-      return;
-    }
-    const tag = document.createElement("script");
-    tag.src = resizerParentSrc;
-    tag.async = true;
-    tag.dataset.anythingllmResizerParent = "true";
-    tag.onload = () => resolve(window.iFrameResize);
-    document.head.appendChild(tag);
-  });
-
-  const injectEmbed = async () => {
+  const injectEmbed = () => {
     if (document.getElementById("anythingllm-embed-frame")) return;
 
     const iframe = document.createElement("iframe");
@@ -46,38 +26,25 @@
     </style>
   </head>
   <body>
-    <script src="${resizerChildSrc}"><\/script>
     <script
       data-embed-id="${embedId}"
       data-base-api-url="${apiBase}"
       data-chat-icon="magic"
       data-position="bottom-right"
       data-assistant-name="AnythingLLM Chat Assistant"
-      data-window-height="520px"
+      data-window-height="400px"
       data-greeting="This is an LLM helper with access to the entirety of the docs. You can directly ask it your questions."
       data-open-on-load="on"
-      data-window-width="340px"
+      data-brand-image-url="false"
+      data-no-sponsor="true"
+      data-no-header="true"
+      data-window-width="300px"
       src="${src}">
     <\/script>
   </body>
 </html>`;
     iframe.srcdoc = html;
     document.body.appendChild(iframe);
-
-    try {
-      const resizer = await ensureResizer();
-      if (resizer) {
-        resizer({
-          checkOrigin: false,
-          sizeHeight: true,
-          sizeWidth: true,
-          heightCalculationMethod: "lowestElement",
-          widthCalculationMethod: "scroll",
-        }, iframe);
-      }
-    } catch (e) {
-      console.warn("iframe-resizer failed to load", e);
-    }
   };
 
   if (document.readyState === "complete" || document.readyState === "interactive") {
@@ -87,13 +54,15 @@
   }
 })();
 </script>
-</head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href>AnythingLLMDocs.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>AnythingLLMDocs.jl</a><ul class="internal"><li><a class="tocitem" href="#Usage"><span>Usage</span></a></li><li><a class="tocitem" href="#Deployment-toggles"><span>Deployment toggles</span></a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>AnythingLLMDocs.jl</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>AnythingLLMDocs.jl</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="AnythingLLMDocs.jl"><a class="docs-heading-anchor" href="#AnythingLLMDocs.jl">AnythingLLMDocs.jl</a><a id="AnythingLLMDocs.jl-1"></a><a class="docs-heading-anchor-permalink" href="#AnythingLLMDocs.jl" title="Permalink"></a></h1><p>AnythingLLMDocs.jl resets or creates an AnythingLLM workspace for your package docs, uploads Markdown sources and docstrings, and mounts the embed widget back into the generated HTML using a small sandboxed iframe.</p><h2 id="Usage"><a class="docs-heading-anchor" href="#Usage">Usage</a><a id="Usage-1"></a><a class="docs-heading-anchor-permalink" href="#Usage" title="Permalink"></a></h2><pre><code class="language-julia hljs">using AnythingLLMDocs
+</head><body><div id="documenter"><nav class="docs-sidebar"><div class="docs-package-name"><span class="docs-autofit"><a href>AnythingLLMDocs.jl</a></span></div><button class="docs-search-query input is-rounded is-small is-clickable my-2 mx-auto py-1 px-2" id="documenter-search-query">Search docs (Ctrl + /)</button><ul class="docs-menu"><li class="is-active"><a class="tocitem" href>AnythingLLMDocs.jl</a><ul class="internal"><li><a class="tocitem" href="#Usage"><span>Usage</span></a></li><li><a class="tocitem" href="#Environmental-Variables"><span>Environmental Variables</span></a></li></ul></li></ul><div class="docs-version-selector field has-addons"><div class="control"><span class="docs-label button is-static is-size-7">Version</span></div><div class="docs-selector control is-expanded"><div class="select is-fullwidth is-size-7"><select id="documenter-version-selector"></select></div></div></div></nav><div class="docs-main"><header class="docs-navbar"><a class="docs-sidebar-button docs-navbar-link fa-solid fa-bars is-hidden-desktop" id="documenter-sidebar-button" href="#"></a><nav class="breadcrumb"><ul class="is-hidden-mobile"><li class="is-active"><a href>AnythingLLMDocs.jl</a></li></ul><ul class="is-hidden-tablet"><li class="is-active"><a href>AnythingLLMDocs.jl</a></li></ul></nav><div class="docs-right"><a class="docs-settings-button docs-navbar-link fa-solid fa-gear" id="documenter-settings-button" href="#" title="Settings"></a><a class="docs-article-toggle-button fa-solid fa-chevron-up" id="documenter-article-toggle-button" href="javascript:;" title="Collapse all docstrings"></a></div></header><article class="content" id="documenter-page"><h1 id="AnythingLLMDocs.jl"><a class="docs-heading-anchor" href="#AnythingLLMDocs.jl">AnythingLLMDocs.jl</a><a id="AnythingLLMDocs.jl-1"></a><a class="docs-heading-anchor-permalink" href="#AnythingLLMDocs.jl" title="Permalink"></a></h1><p>AnythingLLMDocs.jl resets or creates an AnythingLLM workspace for your package docs, uploads Markdown sources and docstrings, and mounts the embed widget back into the generated HTML using a small sandboxed iframe.</p><h2 id="Usage"><a class="docs-heading-anchor" href="#Usage">Usage</a><a id="Usage-1"></a><a class="docs-heading-anchor-permalink" href="#Usage" title="Permalink"></a></h2><pre><code class="language-julia hljs">using AnythingLLMDocs
 
 doc_modules = [MyPackage]
+api_base=&quot;https://anythingllm.krastanov.org/api/v1&quot;
 assets = integrate_anythingllm(
     &quot;MyPackage&quot;,
     doc_modules,
-    @__DIR__;
+    @__DIR__,
+    api_base;
     repo = &quot;github.com/you/MyPackage.jl.git&quot;,
     options = EmbedOptions(; greeting = &quot;Docs-aware helper&quot;, window_width = &quot;320px&quot;),
-)</code></pre><p>Pass <code>assets</code> to <code>Documenter.HTML(assets = assets)</code> in <code>makedocs</code>. All embed attributes listed in the upstream AnythingLLM embed README are represented as <code>String</code> fields in <code>EmbedOptions</code> and may also be passed directly through <code>embed_attributes</code> without validation. The iframe wrapper is only slightly larger than the chat window and defaults to opening the chat immediately with a smaller footprint.</p><h2 id="Deployment-toggles"><a class="docs-heading-anchor" href="#Deployment-toggles">Deployment toggles</a><a id="Deployment-toggles-1"></a><a class="docs-heading-anchor-permalink" href="#Deployment-toggles" title="Permalink"></a></h2><p>Set <code>ANYTHINGLLMDOC_FORCE_DEPLOY</code> to any non-empty value to bypass the deploy check when building docs locally. Configure <code>ANYTHINGLLM_API_BASE</code> and <code>ANYTHINGLLM_API_KEY</code> to point to your instance; the defaults target <code>https://anythingllm.krastanov.org/api/v1</code>.</p></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Sunday 7 December 2025 03:30">Sunday 7 December 2025</span>. Using Julia version 1.12.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
+)</code></pre><p>Pass <code>assets</code> to <code>Documenter.HTML(assets = assets)</code> in <code>makedocs</code>. All embed attributes listed in the upstream AnythingLLM embed README are represented as <code>String</code> fields in <code>EmbedOptions</code>.</p><h2 id="Environmental-Variables"><a class="docs-heading-anchor" href="#Environmental-Variables">Environmental Variables</a><a id="Environmental-Variables-1"></a><a class="docs-heading-anchor-permalink" href="#Environmental-Variables" title="Permalink"></a></h2><p>Set <code>ANYTHINGLLMDOC_FORCE_DEPLOY</code> to any non-empty value to bypass the deploy check when building docs locally. Configure the environmental variable <code>ANYTHINGLLM_API_KEY</code> if you want to avoid hardcoding API keys in the source code.</p></article><nav class="docs-footer"><p class="footer-message">Powered by <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> and the <a href="https://julialang.org/">Julia Programming Language</a>.</p></nav></div><div class="modal" id="documenter-settings"><div class="modal-background"></div><div class="modal-card"><header class="modal-card-head"><p class="modal-card-title">Settings</p><button class="delete"></button></header><section class="modal-card-body"><p><label class="label">Theme</label><div class="select"><select id="documenter-themepicker"><option value="auto">Automatic (OS)</option><option value="documenter-light">documenter-light</option><option value="documenter-dark">documenter-dark</option><option value="catppuccin-latte">catppuccin-latte</option><option value="catppuccin-frappe">catppuccin-frappe</option><option value="catppuccin-macchiato">catppuccin-macchiato</option><option value="catppuccin-mocha">catppuccin-mocha</option></select></div></p><hr/><p>This document was generated with <a href="https://github.com/JuliaDocs/Documenter.jl">Documenter.jl</a> version 1.16.1 on <span class="colophon-date" title="Sunday 7 December 2025 04:41">Sunday 7 December 2025</span>. Using Julia version 1.12.2.</p></section><footer class="modal-card-foot"></footer></div></div></div></body></html>
