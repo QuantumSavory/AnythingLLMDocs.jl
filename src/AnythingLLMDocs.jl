@@ -400,8 +400,6 @@ function embed_script(
 )
     api_base = string(cfg.embed_host, "/api/embed")
     script_src = string(cfg.embed_host, "/embed/anythingllm-chat-widget.min.js")
-    resizer_parent_src = "https://unpkg.com/@iframe-resizer/parent@5.0.0/dist/iframeResizer.min.js"
-    resizer_child_src = "https://unpkg.com/@iframe-resizer/child@5.0.0/dist/iframeResizer.contentWindow.min.js"
     attrs = embed_attributes(options; custom=custom_attributes)
     iframe_styles = merge(default_iframe_style(), iframe_style)
 
@@ -416,28 +414,8 @@ function embed_script(
   const embedId = "$(escape_js(embed_uuid))";
   const apiBase = "$(escape_js(api_base))";
   const src = "$(escape_js(script_src))";
-  const resizerParentSrc = "$(escape_js(resizer_parent_src))";
-  const resizerChildSrc = "$(escape_js(resizer_child_src))";
 
-  const ensureResizer = () => new Promise((resolve) => {
-    if (window.iFrameResize) {
-      resolve(window.iFrameResize);
-      return;
-    }
-    const existing = document.querySelector('script[data-anythingllm-resizer-parent]');
-    if (existing) {
-      existing.addEventListener('load', () => resolve(window.iFrameResize));
-      return;
-    }
-    const tag = document.createElement("script");
-    tag.src = resizerParentSrc;
-    tag.async = true;
-    tag.dataset.anythingllmResizerParent = "true";
-    tag.onload = () => resolve(window.iFrameResize);
-    document.head.appendChild(tag);
-  });
-
-  const injectEmbed = async () => {
+  const injectEmbed = () => {
     if (document.getElementById("anythingllm-embed-frame")) return;
 
     const iframe = document.createElement("iframe");
@@ -456,7 +434,6 @@ function embed_script(
     </style>
   </head>
   <body>
-    <script src="\${resizerChildSrc}"><\\/script>
     <script
       data-embed-id="\${embedId}"
       data-base-api-url="\${apiBase}"
@@ -467,21 +444,6 @@ function embed_script(
 </html>`;
     iframe.srcdoc = html;
     document.body.appendChild(iframe);
-
-    try {
-      const resizer = await ensureResizer();
-      if (resizer) {
-        resizer({
-          checkOrigin: false,
-          sizeHeight: true,
-          sizeWidth: true,
-          heightCalculationMethod: "lowestElement",
-          widthCalculationMethod: "scroll",
-        }, iframe);
-      }
-    } catch (e) {
-      console.warn("iframe-resizer failed to load", e);
-    }
   };
 
   if (document.readyState === "complete" || document.readyState === "interactive") {
