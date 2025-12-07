@@ -308,7 +308,7 @@ Base.@kwdef mutable struct EmbedOptions
     user_bg_color = ""
     assistant_bg_color = ""
     brand_image_url = "false"
-    greeting = "This is an LLM helper with access to the entirety of the docs. You can directly ask it your questions."
+    greeting = "This is an LLM helper with access to the entirety of the docs. You can directly ask it your questions. As usual, take anything it says with a grain of salt -- LLMs are prone to confabulating."
     no_sponsor = "true"
     no_header = "true"
     sponsor_link = ""
