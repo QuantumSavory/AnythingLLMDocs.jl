@@ -6,14 +6,9 @@ using Documenter.DocSystem
 using HTTP
 using JSON
 
-const DEFAULT_API_BASE = get(
-    ENV,
-    "ANYTHINGLLM_API_BASE",
-    "https://anythingllm.krastanov.org/api/v1",
-)
-const DEFAULT_API_KEY = get(ENV, "ANYTHINGLLM_API_KEY", "")
-const DEFAULT_ALLOWLIST = get(ENV, "ANYTHINGLLM_ALLOWLIST", "")
-const DEFAULT_GREETING = "This is an LLM helper with access to the entirety of the docs. You can directly ask it your questions."
+default_api_base() = get(ENV, "ANYTHINGLLM_API_BASE", "")
+default_api_key() = get(ENV, "ANYTHINGLLM_API_KEY", "")
+default_allowlist() = get(ENV, "ANYTHINGLLM_ALLOWLIST", "")
 
 """
 Configuration for connecting to an AnythingLLM instance.
@@ -40,9 +35,9 @@ end
 
 """Create a configuration, normalizing defaults and derived host values."""
 function AnythingLLMConfig(;
-    api_base::String=DEFAULT_API_BASE,
-    api_key::String=DEFAULT_API_KEY,
-    allowlist::String=DEFAULT_ALLOWLIST,
+    api_base::String=default_api_base(),
+    api_key::String=default_api_key(),
+    allowlist::String=default_allowlist(),
     embed_host::Union{Nothing,String}=nothing,
 )
     clean_base = strip_trailing_slash(api_base)
@@ -313,7 +308,7 @@ Base.@kwdef mutable struct EmbedOptions
     user_bg_color::String = ""
     assistant_bg_color::String = ""
     brand_image_url::String = ""
-    greeting::String = DEFAULT_GREETING
+    greeting::String = "This is an LLM helper with access to the entirety of the docs. You can directly ask it your questions."
     no_sponsor::String = ""
     no_header::String = ""
     sponsor_link::String = ""
