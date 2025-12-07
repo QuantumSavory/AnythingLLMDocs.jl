@@ -1,0 +1,24 @@
+name = "AnythingLLMDocs"
+uuid = "333fe5f5-19c9-4863-8caf-c9193e7dba62"
+version = "0.1.0"
+authors = ["Stefan Krastanov <stefan@krastanov.org>"]
+
+[deps]
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+
+[extras]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[compat]
+Aqua = "0.8"
+Documenter = "1"
+HTTP = "1"
+JSON = "0.21"
+julia = "1.9"
+Test = "1"
+
+[targets]
+test = ["Test", "Aqua"]

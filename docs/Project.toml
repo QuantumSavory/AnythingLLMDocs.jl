@@ -1,0 +1,6 @@
+[deps]
+AnythingLLMDocs = "333fe5f5-19c9-4863-8caf-c9193e7dba62"
+Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
+
+[sources]
+AnythingLLMDocs = {path = "/workdir/dev/QuantumSavory/AnythingLLMDocs.jl"}
