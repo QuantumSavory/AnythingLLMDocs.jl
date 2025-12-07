@@ -8,29 +8,26 @@ end
 
 @testset "Configuration and embed defaults" begin
     cfg = AnythingLLMDocs.AnythingLLMConfig(
-        api_base = "https://example.com/api/v1/",
-        api_key = "dummy",
-        allowlist = "example.com",
+        "https://example.com/api/v1/",
+        "dummy",
+        "example.com",
     )
     @test AnythingLLMDocs.host_from_api(cfg.api_base) == "https://example.com"
 
     opts = AnythingLLMDocs.EmbedOptions()
     attrs = AnythingLLMDocs.embed_attributes(opts)
     @test attrs["data-open-on-load"] == "on"
-    @test attrs["data-window-width"] == "340px"
-    @test attrs["data-window-height"] == "520px"
+    @test attrs["data-window-width"] == "300px"
+    @test attrs["data-window-height"] == "400px"
 end
 
 @testset "Live AnythingLLM integration" begin
-    key = get(ENV, "ANYTHINGLLM_API_KEY", "6CNW0SP-V4D46D9-K84QJ19-VHWGSYT")
-    ENV["ANYTHINGLLM_API_KEY"] = key
-    ENV["ANYTHINGLLM_API_BASE"] = get(
-        ENV,
-        "ANYTHINGLLM_API_BASE",
+    cfg = AnythingLLMDocs.AnythingLLMConfig(
         "https://anythingllm.krastanov.org/api/v1",
+        AnythingLLMDocs.default_api_key(),
+        ""
     )
 
-    cfg = AnythingLLMDocs.load_config()
     workspace_name = "AnythingLLMDocs test $(time_ns())"
     workspace = AnythingLLMDocs.recreate_workspace!(cfg, workspace_name)
     slug = String(get(workspace, "slug", AnythingLLMDocs.slugify(workspace_name)))

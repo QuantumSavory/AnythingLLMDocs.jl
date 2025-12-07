@@ -1,14 +1,14 @@
 module AnythingLLMDocs
 
+export integrate_anythingllm, EmbedOptions
+
 import Documenter
 using Documenter: RawHTMLHeadContent
 using Documenter.DocSystem
 using HTTP
 using JSON
 
-default_api_base() = get(ENV, "ANYTHINGLLM_API_BASE", "")
 default_api_key() = get(ENV, "ANYTHINGLLM_API_KEY", "")
-default_allowlist() = get(ENV, "ANYTHINGLLM_ALLOWLIST", "")
 
 """
 Configuration for connecting to an AnythingLLM instance.
@@ -18,34 +18,34 @@ Configuration for connecting to an AnythingLLM instance.
 serving the embed script (derived from `api_base` when not provided).
 """
 struct AnythingLLMConfig
-    api_base::String
-    api_key::String
-    allowlist::String
-    embed_host::String
+    api_base
+    api_key
+    allowlist
+    embed_host
+    function AnythingLLMConfig(api_base, api_key, allowlist, embed_host)
+        clean_api_base = strip_trailing_slash(api_base)
+        clean_embed_host = strip_trailing_slash(embed_host)
+        new(clean_api_base, api_key, allowlist, clean_embed_host)
+    end
 end
 
 """Remove a trailing slash from `s` if present."""
 strip_trailing_slash(s::AbstractString) = endswith(s, "/") ? s[1:end-1] : s
 
 """Derive the host root from an API base, stripping `/api/v1` and trailing slashes."""
-function host_from_api(api_base::String)
+function host_from_api(api_base)
     stripped = replace(strip_trailing_slash(api_base), r"/api/v1$" => "")
     return strip_trailing_slash(stripped)
 end
 
 """Create a configuration, normalizing defaults and derived host values."""
-function AnythingLLMConfig(;
-    api_base::String=default_api_base(),
-    api_key::String=default_api_key(),
-    allowlist::String=default_allowlist(),
-    embed_host::Union{Nothing,String}=nothing,
+function AnythingLLMConfig(
+    api_base,
+    api_key,
+    allowlist
 )
-    clean_base = strip_trailing_slash(api_base)
-    return AnythingLLMConfig(clean_base, api_key, allowlist, embed_host === nothing ? host_from_api(clean_base) : strip_trailing_slash(embed_host))
+    return AnythingLLMConfig(api_base, api_key, allowlist, host_from_api(strip_trailing_slash(api_base)))
 end
-
-"""Load configuration from environment defaults and compute the embed host."""
-load_config() = AnythingLLMConfig()
 
 """Build a fully-qualified API URL for `path` relative to the configured base."""
 api_url(cfg::AnythingLLMConfig, path::AbstractString) = string(cfg.api_base, path)
@@ -56,7 +56,7 @@ Perform an HTTP request against AnythingLLM and parse JSON.
 Throws if no API key is configured or if the status is non-2xx. Returns the
 parsed JSON object or a `Dict` with `"raw"` when parsing fails.
 """
-function request_json(cfg::AnythingLLMConfig, method::String, path::String; body=nothing)
+function request_json(cfg::AnythingLLMConfig, method, path; body=nothing)
     isempty(cfg.api_key) && error("ANYTHINGLLM_API_KEY must be provided")
 
     headers = ["Authorization" => "Bearer $(cfg.api_key)"]
@@ -123,7 +123,7 @@ Delete uploaded documentation artifacts associated with a workspace.
 Matches on known doc and docstring `docSource` markers containing the workspace
 name or slug.
 """
-function delete_workspace_documents!(cfg, name::String, slug::String)
+function delete_workspace_documents!(cfg, name, slug)
     docs = list_documents(cfg)
     targets = String[]
     for doc in docs
@@ -142,7 +142,7 @@ function delete_workspace_documents!(cfg, name::String, slug::String)
 end
 
 """Ensure a folder exists (best effort)."""
-function ensure_folder!(cfg, folder::String)
+function ensure_folder!(cfg, folder)
     try
         request_json(cfg, "POST", "/document/create-folder"; body=Dict("name" => folder))
     catch err
@@ -155,7 +155,7 @@ Move uploaded documents into a target folder.
 
 `locations` should be the `location` paths returned by AnythingLLM uploads.
 """
-function move_files_to_folder!(cfg, folder::String, locations::Vector{String})
+function move_files_to_folder!(cfg, folder, locations::Vector{String})
     isempty(locations) && return
     ensure_folder!(cfg, folder)
     files = [
@@ -183,7 +183,7 @@ Recreate the workspace named `name`, ensuring embeds and uploaded docs are remov
 
 Returns the newly created workspace object.
 """
-function recreate_workspace!(cfg, name::String)
+function recreate_workspace!(cfg, name)
     workspaces = current_workspaces(cfg)
     target_slug = slugify(name)
     workspace_by_id = Dict(ws["id"] => String(ws["slug"]) for ws in workspaces if haskey(ws, "id") && haskey(ws, "slug"))
@@ -208,7 +208,7 @@ Upload a text blob as a document to AnythingLLM, attaching metadata.
 
 Returns the locations of the created document artifacts.
 """
-function upload_raw!(cfg, workspace_slug::String; title::String, text::String, source::String)
+function upload_raw!(cfg, workspace_slug; title, text, source)
     body = Dict(
         "textContent" => text,
         "addToWorkspaces" => workspace_slug,
@@ -239,7 +239,7 @@ Upload all Markdown sources under `docs_root` into the target workspace.
 
 Returns the locations of uploaded artifacts.
 """
-function upload_markdown_sources!(cfg, workspace_slug::String, docs_root::String)
+function upload_markdown_sources!(cfg, workspace_slug, docs_root)
     locations = String[]
     for (root, _, files) in walkdir(docs_root)
         for file in files
@@ -262,7 +262,7 @@ markdown_string(md) = sprint(io -> show(io, MIME"text/plain"(), md))
 Collect docstrings for the given module into a Dict keyed by fully-qualified name.
 """
 function docstrings_for_module(mod::Module)
-    entries = Dict{String,String}()
+    entries = Dict()
     for name in names(mod; all=false, imported=false)
         binding = DocSystem.binding(mod, name)
         docs = DocSystem.getdocs(binding)
@@ -279,7 +279,7 @@ Upload collected docstrings for all provided modules to AnythingLLM.
 
 Returns the locations of uploaded artifacts.
 """
-function upload_docstrings!(cfg, workspace_slug::String, modules::Vector{Module})
+function upload_docstrings!(cfg, workspace_slug, modules::Vector{Module})
     seen = Set{String}()
     locations = String[]
     for mod in modules
@@ -299,38 +299,38 @@ end
 
 """Embed configuration options mirrored from AnythingLLM's embed README."""
 Base.@kwdef mutable struct EmbedOptions
-    prompt::String = ""
-    model::String = ""
-    temperature::String = ""
-    language::String = ""
-    chat_icon::String = "magic"
-    button_color::String = ""
-    user_bg_color::String = ""
-    assistant_bg_color::String = ""
-    brand_image_url::String = ""
-    greeting::String = "This is an LLM helper with access to the entirety of the docs. You can directly ask it your questions."
-    no_sponsor::String = ""
-    no_header::String = ""
-    sponsor_link::String = ""
-    sponsor_text::String = ""
-    position::String = "bottom-right"
-    assistant_name::String = "AnythingLLM Chat Assistant"
-    assistant_icon::String = ""
-    window_height::String = "520px"
-    window_width::String = "340px"
-    text_size::String = ""
-    username::String = ""
-    default_messages::String = ""
-    send_message_text::String = ""
-    reset_chat_text::String = ""
-    open_on_load::String = "on"
-    show_thoughts::String = ""
-    support_email::String = ""
+    prompt = ""
+    model = ""
+    temperature = ""
+    language = ""
+    chat_icon = "magic"
+    button_color = ""
+    user_bg_color = ""
+    assistant_bg_color = ""
+    brand_image_url = "false"
+    greeting = "This is an LLM helper with access to the entirety of the docs. You can directly ask it your questions."
+    no_sponsor = "true"
+    no_header = "true"
+    sponsor_link = ""
+    sponsor_text = ""
+    position = "bottom-right"
+    assistant_name = "AnythingLLM Chat Assistant"
+    assistant_icon = ""
+    window_height = "400px"
+    window_width = "300px"
+    text_size = ""
+    username = ""
+    default_messages = ""
+    send_message_text = ""
+    reset_chat_text = ""
+    open_on_load = "on"
+    show_thoughts = ""
+    support_email = ""
 end
 
 """Convert options into data-attributes for the embed script tag."""
-function embed_attributes(opts::EmbedOptions; custom::Dict{String,String}=Dict{String,String}())
-    attrs = Dict{String,String}(
+function embed_attributes(opts::EmbedOptions; custom=Dict()) # TODO implement without silly name repetition by extracting named tuple
+    attrs = Dict(
         "data-prompt" => opts.prompt,
         "data-model" => opts.model,
         "data-temperature" => opts.temperature,
@@ -393,14 +393,13 @@ We isolate the widget to avoid clashes with Documenter's bundled `require.js`.
 """
 function embed_script(
     cfg::AnythingLLMConfig,
-    embed_uuid::String;
+    embed_uuid;
     options::EmbedOptions=EmbedOptions(),
-    iframe_style::Dict{String,String}=Dict{String,String}(),
-    custom_attributes::Dict{String,String}=Dict{String,String}(),
+    iframe_style=Dict()
 )
     api_base = string(cfg.embed_host, "/api/embed")
     script_src = string(cfg.embed_host, "/embed/anythingllm-chat-widget.min.js")
-    attrs = embed_attributes(options; custom=custom_attributes)
+    attrs = embed_attributes(options)
     iframe_styles = merge(default_iframe_style(), iframe_style)
 
     style_str = join(["$(k): $(v);" for (k, v) in iframe_styles], " ")
@@ -457,7 +456,7 @@ function embed_script(
 end
 
 """Create an embed configuration for the workspace and return its UUID."""
-function create_embed!(cfg, workspace_slug::String; allowlist::String=cfg.allowlist, chat_mode::String="query")
+function create_embed!(cfg, workspace_slug; allowlist=cfg.allowlist, chat_mode="query")
     body = Dict(
         "workspace_slug" => workspace_slug,
         "chat_mode" => chat_mode,
@@ -470,7 +469,7 @@ function create_embed!(cfg, workspace_slug::String; allowlist::String=cfg.allowl
     return String(uuid)
 end
 
-function determine_workspace_title(name::String, docs_root::String; repo::Union{Nothing,String}=nothing)
+function determine_workspace_title(name, docs_root; repo::Union{Nothing,String}=nothing)
     if repo === nothing
         return string(name, " docs")
     end
@@ -499,17 +498,23 @@ Full AnythingLLM integration hook: reset workspace, upload docs and docstrings,
 create an embed, and return the head asset to inject into Documenter.
 """
 function integrate_anythingllm(
-    name::String,
+    name,
     modules::Vector{Module},
-    docs_root::String;
+    docs_root,
+    api_base;
     repo::Union{Nothing,String}=nothing,
     options::EmbedOptions=EmbedOptions(),
-    iframe_style::Dict{String,String}=Dict{String,String}(),
-    embed_attributes::Dict{String,String}=Dict{String,String}(),
-    allowlist::Union{Nothing,String}=nothing,
-    chat_mode::String="query",
+    iframe_style=Dict(),
+    api_key=default_api_key(),
+    allowlist="",
+    chat_mode="query",
 )
-    cfg = load_config()
+    cfg = AnythingLLMConfig(
+        api_base,
+        api_key,
+        allowlist
+    )
+
     force_workspace = get(ENV, "ANYTHINGLLMDOC_FORCE_DEPLOY", "")
     try
         workspace_title = ""
@@ -529,21 +534,12 @@ function integrate_anythingllm(
         append!(locations, upload_markdown_sources!(cfg, slug, joinpath(docs_root, "src")))
         append!(locations, upload_docstrings!(cfg, slug, modules))
         move_files_to_folder!(cfg, slug, locations)
-        uuid = create_embed!(cfg, slug; allowlist=something(allowlist, cfg.allowlist), chat_mode=chat_mode)
-        return [RawHTMLHeadContent(embed_script(cfg, uuid; options=options, iframe_style=iframe_style, custom_attributes=embed_attributes))]
+        uuid = create_embed!(cfg, slug; allowlist, chat_mode)
+        return [RawHTMLHeadContent(embed_script(cfg, uuid; options, iframe_style))]
     catch err
         @warn "AnythingLLM integration failed; docs will build without chat" exception=(err, catch_backtrace())
         return RawHTMLHeadContent[]
     end
 end
-
-export AnythingLLMConfig,
-    EmbedOptions,
-    embed_attributes,
-    embed_script,
-    integrate_anythingllm,
-    recreate_workspace!,
-    upload_docstrings!,
-    upload_markdown_sources!
 
 end # module

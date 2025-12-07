@@ -9,10 +9,6 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-${{ (github.ref != 'refs/heads/master' && github.ref != 'refs/heads/main') || github.run_number }}
   cancel-in-progress: ${{ startsWith(github.ref, 'refs/pull/') }}
 
-env:
-  ANYTHINGLLM_API_BASE: https://anythingllm.krastanov.org/api/v1
-  ANYTHINGLLM_API_KEY: 6CNW0SP-V4D46D9-K84QJ19-VHWGSYT
-
 jobs:
   test:
     name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
@@ -34,6 +30,7 @@ jobs:
       - uses: julia-actions/julia-runtest@v1
         env:
           ANYTHINGLLMDOC_FORCE_DEPLOY: "CI tests"
+          ANYTHINGLLM_API_KEY: ${{ secrets.ANYTHINGLLM_API_KEY }}
 
   docs:
     name: Documentation
@@ -49,4 +46,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DOCUMENTER_KEY: ${{ secrets.DOCUMENTER_KEY }}
-          ANYTHINGLLMDOC_FORCE_DEPLOY: "CI docs"
+          ANYTHINGLLM_API_KEY: ${{ secrets.ANYTHINGLLM_API_KEY }}

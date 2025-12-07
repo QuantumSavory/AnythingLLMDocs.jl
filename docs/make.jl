@@ -1,20 +1,15 @@
-push!(LOAD_PATH, "../src/")
-
 using Documenter
 using AnythingLLMDocs
 
-ENV["ANYTHINGLLMDOC_FORCE_DEPLOY"] = get(
-    ENV,
-    "ANYTHINGLLMDOC_FORCE_DEPLOY",
-    "AnythingLLMDocs docs build",
-)
-
 doc_modules = [AnythingLLMDocs]
+
+api_base="https://anythingllm.krastanov.org/api/v1"
 
 assets = integrate_anythingllm(
     "AnythingLLMDocs",
     doc_modules,
-    @__DIR__;
+    @__DIR__,
+    api_base;
     repo = "github.com/QuantumSavory/AnythingLLMDocs.jl.git",
     options = EmbedOptions(),
 )
@@ -33,8 +28,4 @@ makedocs(
     ],
 )
 
-if !isempty(get(ENV, "DOCUMENTER_KEY", "")) || !isempty(get(ENV, "GITHUB_TOKEN", ""))
-    deploydocs(repo = "github.com/QuantumSavory/AnythingLLMDocs.jl.git")
-else
-    @info "Skipping deploydocs because no credentials were provided."
-end
+deploydocs(repo = "github.com/QuantumSavory/AnythingLLMDocs.jl.git")
