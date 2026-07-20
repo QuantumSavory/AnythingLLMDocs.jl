@@ -28,4 +28,7 @@ makedocs(
     ],
 )
 
-deploydocs(repo = "github.com/QuantumSavory/AnythingLLMDocs.jl.git")
+deploydocs(
+    repo = "github.com/QuantumSavory/AnythingLLMDocs.jl.git",
+    push_preview = true,
+)
