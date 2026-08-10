@@ -2,8 +2,10 @@ using AnythingLLMDocs
 using Aqua
 using Test
 
-@testset "Aqua" begin
-    Aqua.test_all(AnythingLLMDocs)
+if get(ENV, "QUANTUMSAVORY_DOWNGRADE_TEST", "") != "true"
+    @testset "Aqua" begin
+        Aqua.test_all(AnythingLLMDocs)
+    end
 end
 
 @testset "Configuration and embed defaults" begin
